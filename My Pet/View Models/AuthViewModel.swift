@@ -187,4 +187,30 @@ final class AuthViewModel: ObservableObject {
             )
         }
     }
+    
+    // MARK: - Google Sign In
+
+    func signInWithGoogle() async {
+        isLoading = true
+        errorMessage = nil
+
+        defer {
+            isLoading = false
+        }
+
+        do {
+            currentUser = try await AuthService.signInWithGoogle()
+            isAuthenticated = true
+
+            print("✅ Google Sign-In successful")
+            print("👤 User: \(currentUser?.username ?? "Unknown")")
+            print("📧 Email: \(currentUser?.email ?? "Unknown")")
+
+        } catch {
+            errorMessage = error.localizedDescription
+
+            print("❌ Google Sign-In failed")
+            print("❌ Error: \(error.localizedDescription)")
+        }
+    }
 }

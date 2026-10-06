@@ -8,76 +8,188 @@
 import SwiftUI
 
 struct RegisterView: View {
+
     @State private var email = ""
     @State private var password = ""
     @State private var username = ""
-    
+
     @EnvironmentObject var authVM: AuthViewModel
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        VStack(spacing: 24) {
-            // 🐾 Title
-            Text("Create Account 🐶")
-                .font(.largeTitle.bold())
-                .padding(.top, 40)
+        ZStack {
 
-            // ✏️ Fields
-            VStack(alignment: .leading, spacing: 12) {
-                TextField("Username", text: $username)
-                    .textFieldStyle(.roundedBorder)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled(true)
+            // MARK: - Background Image
 
-                TextField("Email", text: $email)
-                    .textFieldStyle(.roundedBorder)
-                    .keyboardType(.emailAddress)
-                    .autocapitalization(.none)
+            Image("loginpet")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
 
-                SecureField("Password", text: $password)
-                    .textFieldStyle(.roundedBorder)
-            }
+            // MARK: - Dark Overlay
 
-            // ⏳ Loading
-            if authVM.isLoading {
-                ProgressView("Creating account...")
-                    .padding(.top)
-            }
+            Color.black.opacity(0.45)
+                .ignoresSafeArea()
 
-            // 🚀 Sign Up
-            Button {
-                Task {
-                    guard !email.isEmpty, !password.isEmpty, !username.isEmpty else {
-                        authVM.errorMessage = "Please fill in all fields."
-                        return
+            // MARK: - Registration Content
+
+            ScrollView {
+                VStack(spacing: 22) {
+
+                    // Push content down so the FurryTails logo
+                    // remains visible in the background.
+                    Spacer()
+                        .frame(height: 185)
+
+                    // MARK: - Title
+
+                    VStack(spacing: 8) {
+
+                        Text("🐾")
+                            .font(.system(size: 50))
+
+                        Text("Create Account")
+                            .font(
+                                .system(
+                                    size: 32,
+                                    weight: .bold,
+                                    design: .rounded
+                                )
+                            )
+                            .foregroundColor(.white)
+
+                        Text("Join the FurryTails community")
+                            .font(.subheadline)
+                            .foregroundColor(
+                                .white.opacity(0.85)
+                            )
                     }
-                    await authVM.signUp(email: email, password: password, username: username)
-                    if authVM.isAuthenticated {
+
+                    // MARK: - Registration Fields
+
+                    VStack(spacing: 12) {
+
+                        TextField(
+                            "Username",
+                            text: $username
+                        )
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled(true)
+
+                        TextField(
+                            "Email",
+                            text: $email
+                        )
+                        .textFieldStyle(.roundedBorder)
+                        .keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled(true)
+
+                        SecureField(
+                            "Password",
+                            text: $password
+                        )
+                        .textFieldStyle(.roundedBorder)
+                    }
+
+                    // MARK: - Loading
+
+                    if authVM.isLoading {
+                        ProgressView(
+                            "Creating account..."
+                        )
+                        .tint(.white)
+                        .foregroundColor(.white)
+                        .padding(.top, 4)
+                    }
+
+                    // MARK: - Sign Up
+
+                    Button {
+
+                        Task {
+
+                            guard
+                                !email.isEmpty,
+                                !password.isEmpty,
+                                !username.isEmpty
+                            else {
+                                authVM.errorMessage =
+                                    "Please fill in all fields."
+                                return
+                            }
+
+                            await authVM.signUp(
+                                email: email,
+                                password: password,
+                                username: username
+                            )
+
+                            if authVM.isAuthenticated {
+                                dismiss()
+                            }
+                        }
+
+                    } label: {
+
+                        Text("Create Account")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(
+                                authVM.isLoading
+                                ? AnyShapeStyle(Color.gray)
+                                : AnyShapeStyle(
+                                    FurryTailsTheme.primaryGradient
+                                )
+                            )
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                    }
+                    .disabled(authVM.isLoading)
+
+                    // MARK: - Error
+
+                    if let error = authVM.errorMessage {
+
+                        Text(error)
+                            .foregroundColor(.white)
+                            .font(.footnote)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                            .transition(
+                                .opacity.combined(with: .slide)
+                            )
+                    }
+
+                    // MARK: - Back to Login
+
+                    Button {
                         dismiss()
+                    } label: {
+
+                        Text("Already have an account? Sign in")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
                     }
+
+                    Spacer()
+                        .frame(height: 38)
                 }
-            } label: {
-                Text("Sign Up")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(authVM.isLoading ? Color.gray.gradient : Color.green.gradient)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+                .padding(.horizontal, 24)
             }
-            .disabled(authVM.isLoading)
-
-            // ⚠️ Error Message
-            if let error = authVM.errorMessage {
-                Text(error)
-                    .foregroundColor(.red)
-                    .font(.footnote)
-                    .transition(.opacity.combined(with: .slide))
-            }
-
-            Spacer()
         }
-        .padding(.horizontal, 24)
-        .animation(.easeInOut, value: authVM.errorMessage)
+        .animation(
+            .easeInOut,
+            value: authVM.errorMessage
+        )
     }
+}
+
+#Preview {
+    RegisterView()
+        .environmentObject(AuthViewModel())
+    
 }

@@ -1,4 +1,3 @@
-//
 //  My_PetsApp.swift
 //  My Pets
 //
@@ -12,33 +11,81 @@ import FirebaseFirestore
 
 @main
 struct my_Petsapp: App {
+
     @StateObject private var authVM = AuthViewModel()
 
-    // Firebase initialization
+    @State private var showHero = false
+
+    // MARK: - Firebase Initialization
+
     init() {
         FirebaseApp.configure()
+
         let db = Firestore.firestore()
+
         db.collection("test").getDocuments { snapshot, error in
+
             if let error = error {
-                print("🔥 Firestore test failed:", error.localizedDescription)
+                print(
+                    "🔥 Firestore test failed:",
+                    error.localizedDescription
+                )
             } else {
-                print("✅ Firestore connected: \(snapshot?.documents.count ?? 0) documents found")
+                print(
+                    "✅ Firestore connected: \(snapshot?.documents.count ?? 0) documents found"
+                )
             }
         }
     }
 
+    // MARK: - App Body
 
     var body: some Scene {
+
         WindowGroup {
+
             Group {
-                if authVM.isAuthenticated {
-                    // your main app (once logged in)
-                    MainTabView()
-                        .environmentObject(authVM)
-                } else {
-                    // show login/register flow
+
+                if !authVM.isAuthenticated {
+
+                    // MARK: - Not Authenticated
+
                     LoginView()
                         .environmentObject(authVM)
+
+                } else if showHero {
+
+                    // MARK: - Post Login Hero
+
+                    HeroView(
+                        onFinished: {
+                            withAnimation(.easeInOut) {
+                                showHero = false
+                            }
+                        }
+                    )
+                    .environmentObject(authVM)
+
+                } else {
+
+                    // MARK: - Main Application
+
+                    MainTabView()
+                        .environmentObject(authVM)
+                }
+            }
+
+            // Detect successful authentication.
+            .onChange(
+                of: authVM.isAuthenticated
+            ) { _, authenticated in
+
+                if authenticated {
+                    withAnimation(.easeInOut) {
+                        showHero = true
+                    }
+                } else {
+                    showHero = false
                 }
             }
         }
