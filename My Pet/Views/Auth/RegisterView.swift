@@ -39,7 +39,7 @@ struct RegisterView: View {
                     // Push content down so the FurryTails logo
                     // remains visible in the background.
                     Spacer()
-                        .frame(height: 185)
+                        .frame(height: 250)
 
                     // MARK: - Title
 

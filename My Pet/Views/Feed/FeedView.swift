@@ -238,6 +238,19 @@ struct FeedView: View {
                             Spacer()
 
                             Divider()
+                            
+                            menuItem(
+                                title: "Vet Services",
+                                icon: "stethoscope.circle.fill"
+                            ) {
+                                closeMenu()
+                            }
+                            
+                            Spacer()
+                            
+                            Divider()
+                            
+                            
 
                             menuItem(
                                 title: "Sign Out",

@@ -38,7 +38,7 @@ struct LoginView: View {
                 VStack(spacing: 22) {
 
                     Spacer()
-                        .frame(height: 150)
+                        .frame(height: 250)
 
                     // MARK: - Logo / Title
 
