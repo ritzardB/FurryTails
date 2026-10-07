@@ -8,9 +8,11 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @Binding var deepLinkedPostId: String?
+
     var body: some View {
         TabView {
-            FeedView()
+            FeedView(deepLinkedPostId: $deepLinkedPostId)
                 .tabItem {
                     Label("Feed", systemImage: "house.fill")
                 }
@@ -24,7 +26,7 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Post", systemImage: "plus.app.fill")
                 }
-            
+
             LivePhotoView()
                 .tabItem {
                     Label("Live", systemImage: "livephoto")
@@ -35,6 +37,6 @@ struct MainTabView: View {
                     Label("Profile", systemImage: "person.crop.circle.fill")
                 }
         }
-        .accentColor(.blue) // You can change this color
+        .accentColor(.blue)
     }
 }

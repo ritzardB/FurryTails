@@ -9,6 +9,8 @@ import SwiftUI
 import FirebaseFirestore
 
 struct FeedView: View {
+    
+    @Binding var deepLinkedPostId: String?
 
     @StateObject private var viewModel = FeedUploadViewModel()
     @State private var isLoading = true
@@ -18,6 +20,11 @@ struct FeedView: View {
     @State private var showAddPost = false
     @State private var showSearch = false
     @State private var showMenu = false
+    
+    init(deepLinkedPostId: Binding<String?> = .constant(nil)) {
+           self._deepLinkedPostId = deepLinkedPostId
+       }
+
 
     var body: some View {
 

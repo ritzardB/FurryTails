@@ -15,6 +15,9 @@ struct my_Petsapp: App {
     @StateObject private var authVM = AuthViewModel()
 
     @State private var showHero = false
+    
+    // Deep-Link stats
+    @State private var deepLinkedPostId: String?
 
     // MARK: - Firebase Initialization
 
@@ -70,8 +73,10 @@ struct my_Petsapp: App {
 
                     // MARK: - Main Application
 
-                    MainTabView()
-                        .environmentObject(authVM)
+                    MainTabView(
+                        deepLinkedPostId: $deepLinkedPostId
+                    )
+                    .environmentObject(authVM)
                 }
             }
 

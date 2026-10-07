@@ -668,17 +668,73 @@ struct PostCardView: View {
             // Update local UI
             shareCount += 1
 
-            // Open iOS share sheet
-            let items: [Any] = [
+            // Build post photos
+            let photos: [String] = {
 
+                if !post.imageURLs.isEmpty {
+                    return post.imageURLs
+
+                } else if let imageURL = post.imageURL,
+                          !imageURL.isEmpty {
+
+                    return [imageURL]
+
+                } else {
+
+                    return []
+                }
+            }()
+            
+            let shareURL = URL(
+                string: "https://furry-tails.app/post/\(postId)"
+            )!
+
+            // Share currently displayed photo
+            var activityItems: [Any] = [
                 "Check out this post on FurryTails! 🐾",
-
-                post.caption
+                post.caption,
+                shareURL
             ]
 
+            if !post.caption.isEmpty {
+                activityItems.append(post.caption)
+            }
+
+            if photos.indices.contains(selectedPhotoIndex) {
+
+                let imageURLString =
+                    photos[selectedPhotoIndex]
+
+                if let imageURL =
+                    URL(string: imageURLString) {
+
+                    do {
+
+                        let (data, _) =
+                            try await URLSession.shared.data(
+                                from: imageURL
+                            )
+
+                        if let image =
+                            UIImage(data: data) {
+
+                            activityItems.append(image)
+                        }
+
+                    } catch {
+
+                        print(
+                            "⚠️ Unable to download post image:",
+                            error.localizedDescription
+                        )
+                    }
+                }
+            }
+
+            // Present native iOS share sheet
             let activityVC =
                 UIActivityViewController(
-                    activityItems: items,
+                    activityItems: activityItems,
                     applicationActivities: nil
                 )
 
