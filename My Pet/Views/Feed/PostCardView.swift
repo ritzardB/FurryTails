@@ -17,9 +17,9 @@ struct PostCardView: View {
 
     @State private var likeCount: Int
     @State private var repostCount: Int
-    @State private var shareCount = 0
+    @State private var shareCount: Int
     @State private var commentCount: Int
-
+    
     @State private var isLiked = false
     @State private var isReposted = false
 
@@ -49,6 +49,10 @@ struct PostCardView: View {
 
         _repostCount = State(
             initialValue: post.reposts
+        )
+        
+        _shareCount = State(
+            initialValue: post.shares
         )
 
         _commentCount = State(
@@ -156,17 +160,17 @@ struct PostCardView: View {
 
                     Button {
 
-                        sharePost()
+                        Task {
+                            await sharePost()
+                        }
 
                     } label: {
 
                         Label(
                             "Share",
-                            systemImage:
-                                "square.and.arrow.up"
+                            systemImage: "square.and.arrow.up"
                         )
                     }
-                    
                     // MARK: - Comment
 
                     Button {
@@ -414,23 +418,20 @@ struct PostCardView: View {
 
                 Button {
 
-                    shareCount += 1
-                    sharePost()
+                    Task {
+                        await sharePost()
+                    }
 
                 } label: {
 
                     Label(
                         "\(shareCount)",
-                        systemImage:
-                            "square.and.arrow.up"
+                        systemImage: "square.and.arrow.up"
                     )
-                    .foregroundColor(
-                        .blue
-                    )
+                    .foregroundColor(.blue)
+
                 }
-                .frame(
-                    maxWidth: .infinity
-                )
+                .frame(maxWidth: .infinity)
 
                 // 💬 COMMENT
 
@@ -650,42 +651,66 @@ struct PostCardView: View {
 
     // MARK: - Share
 
-    private func sharePost() {
+    private func sharePost() async {
 
-        let items: [Any] = [
+        guard let postId = post.id else {
+            return
+        }
 
-            "Check out this post on FurryTails! 🐾",
+        do {
 
-            post.caption
-        ]
+            // Record share in Firestore
+            try await PostInteractionService.shared
+                .recordShare(
+                    postId: postId
+                )
 
-        let activityVC =
-            UIActivityViewController(
-                activityItems:
-                    items,
-                applicationActivities:
-                    nil
-            )
+            // Update local UI
+            shareCount += 1
 
-        if let windowScene =
-            UIApplication.shared
-                .connectedScenes
-                .first as? UIWindowScene,
+            // Open iOS share sheet
+            let items: [Any] = [
 
-           let rootVC =
-            windowScene
-                .windows
-                .first(
-                    where: {
-                        $0.isKeyWindow
-                    }
-                )?
-                .rootViewController
-        {
+                "Check out this post on FurryTails! 🐾",
 
-            rootVC.present(
-                activityVC,
-                animated: true
+                post.caption
+            ]
+
+            let activityVC =
+                UIActivityViewController(
+                    activityItems: items,
+                    applicationActivities: nil
+                )
+
+            if let windowScene =
+                UIApplication.shared
+                    .connectedScenes
+                    .compactMap({
+                        $0 as? UIWindowScene
+                    })
+                    .first,
+
+               let rootVC =
+                windowScene
+                    .windows
+                    .first(
+                        where: {
+                            $0.isKeyWindow
+                        }
+                    )?
+                    .rootViewController {
+
+                rootVC.present(
+                    activityVC,
+                    animated: true
+                )
+            }
+
+        } catch {
+
+            print(
+                "❌ Share failed:",
+                error.localizedDescription
             )
         }
     }

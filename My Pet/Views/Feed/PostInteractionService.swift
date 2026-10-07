@@ -182,6 +182,48 @@ final class PostInteractionService {
 
         return snapshot.exists
     }
+    
+    // MARK: - Share
+
+    func recordShare(
+        postId: String
+    ) async throws {
+
+        guard let uid = currentUserId else {
+            throw interactionError(
+                "You must be signed in to share a post."
+            )
+        }
+
+        let postRef = db
+            .collection("posts")
+            .document(postId)
+
+        let shareRef = postRef
+            .collection("shares")
+            .document()
+
+        let batch = db.batch()
+
+        // Record individual share
+        batch.setData(
+            [
+                "userId": uid,
+                "createdAt": FieldValue.serverTimestamp()
+            ],
+            forDocument: shareRef
+        )
+
+        // Increment post share counter
+        batch.updateData(
+            [
+                "shares": FieldValue.increment(Int64(1))
+            ],
+            forDocument: postRef
+        )
+
+        try await batch.commit()
+    }
 
     // MARK: - Add Comment
 

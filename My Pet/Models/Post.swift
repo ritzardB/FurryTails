@@ -19,6 +19,7 @@ struct Post: Identifiable, Codable {
 
     var likes: Int
     var reposts: Int
+    var shares: Int
     var comments: Int
 
     var user: UserModel? = nil
@@ -33,6 +34,7 @@ struct Post: Identifiable, Codable {
         case createdAt
         case likes
         case reposts
+        case shares
         case comments
     }
 
@@ -47,6 +49,7 @@ struct Post: Identifiable, Codable {
         likes: Int = 0,
         reposts: Int = 0,
         comments: Int = 0,
+        shares: Int = 0,
         user: UserModel? = nil
     ) {
         self.id = id
@@ -58,6 +61,7 @@ struct Post: Identifiable, Codable {
         self.createdAt = createdAt
         self.likes = likes
         self.reposts = reposts
+        self.shares = shares
         self.comments = comments
         self.user = user
     }
@@ -120,6 +124,13 @@ struct Post: Identifiable, Codable {
                 Int.self,
                 forKey: .reposts
             ) ?? 0
+        
+        self.shares =
+            try container.decodeIfPresent(
+                Int.self,
+                forKey: .shares
+            ) ?? 0
+            
 
         self.comments =
             try container.decodeIfPresent(
