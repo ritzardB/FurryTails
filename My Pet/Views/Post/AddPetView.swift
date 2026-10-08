@@ -17,14 +17,36 @@ struct AddPetView: View {
 
     var onPetAdded: (() -> Void)?
 
+    // MARK: - Basic Information
+
     @State private var name = ""
     @State private var species = ""
     @State private var breed = ""
     @State private var age = ""
+
+    // MARK: - Identity
+
+    @State private var sex = ""
+    @State private var color = ""
+    @State private var distinguishingMarks = ""
+    @State private var microchipNumber = ""
+
+    // MARK: - About
+
     @State private var bio = ""
+
+    // MARK: - Personality
+
+    @State private var character = ""
+    @State private var traits = ""
+    @State private var characteristics = ""
+
+    // MARK: - Main Photo
 
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImageData: Data?
+
+    // MARK: - State
 
     @State private var isUploading = false
     @State private var shareAsPost = false
@@ -38,71 +60,82 @@ struct AddPetView: View {
 
             ScrollView {
 
-                VStack(spacing: 20) {
+                VStack(spacing: 22) {
 
                     // MARK: - Pet Image Picker
 
-                    PhotosPicker(
-                        selection: $selectedItem,
-                        matching: .images
-                    ) {
+                    VStack(spacing: 10) {
 
-                        VStack {
+                        PhotosPicker(
+                            selection: $selectedItem,
+                            matching: .images
+                        ) {
 
-                            if let selectedImageData,
-                               let img = UIImage(data: selectedImageData) {
+                            VStack(spacing: 12) {
 
-                                Image(uiImage: img)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(maxWidth: 200)
-                                    .cornerRadius(12)
+                                if let selectedImageData,
+                                   let img = UIImage(data: selectedImageData) {
 
-                            } else {
-
-                                Image(systemName: "photo.on.rectangle")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 120)
-                                    .foregroundColor(.gray)
-                            }
-
-                            Text("Select Pet Photo")
-                                .font(.caption)
-                                .foregroundColor(.blue)
-                        }
-                    }
-                    .onChange(of: selectedItem) { _, newItem in
-
-                        Task {
-
-                            guard let newItem else {
-                                print("⚠️ No photo selected")
-                                return
-                            }
-
-                            do {
-
-                                if let data = try await newItem.loadTransferable(
-                                    type: Data.self
-                                ) {
-
-                                    await MainActor.run {
-                                        selectedImageData = data
-                                    }
-
-                                    print("✅ Pet photo loaded")
-                                    print("📦 Image size: \(data.count) bytes")
+                                    Image(uiImage: img)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(maxWidth: 220, maxHeight: 220)
+                                        .cornerRadius(16)
+                                        .shadow(radius: 4)
 
                                 } else {
 
-                                    print("❌ Could not load image data")
+                                    Image(systemName: "photo.on.rectangle")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 110, height: 110)
+                                        .foregroundColor(FurryTailsTheme.orange)
+
                                 }
 
-                            } catch {
+                                Text(
+                                    selectedImageData == nil
+                                    ? "Select Pet Photo"
+                                    : "Change Pet Photo"
+                                )
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(FurryTailsTheme.orange)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .onChange(of: selectedItem) { _, newItem in
 
-                                print("❌ Photo loading failed:")
-                                print(error.localizedDescription)
+                            Task {
+
+                                guard let newItem else {
+                                    print("⚠️ No photo selected")
+                                    return
+                                }
+
+                                do {
+
+                                    if let data = try await newItem.loadTransferable(
+                                        type: Data.self
+                                    ) {
+
+                                        await MainActor.run {
+                                            selectedImageData = data
+                                        }
+
+                                        print("✅ Pet photo loaded")
+                                        print("📦 Image size: \(data.count) bytes")
+
+                                    } else {
+
+                                        print("❌ Could not load image data")
+                                    }
+
+                                } catch {
+
+                                    print("❌ Photo loading failed:")
+                                    print(error.localizedDescription)
+                                }
                             }
                         }
                     }
@@ -115,7 +148,12 @@ struct AddPetView: View {
                     )
                     .padding(.horizontal)
 
-                    // MARK: - Pet Information
+                    // MARK: - Basic Information
+
+                    sectionHeader(
+                        title: "Basic Information",
+                        icon: "pawprint.fill"
+                    )
 
                     Group {
 
@@ -138,45 +176,167 @@ struct AddPetView: View {
                             "Age",
                             text: $age
                         )
-
-                        TextField(
-                            "Short Bio",
-                            text: $bio
-                        )
+                        .keyboardType(.numberPad)
                     }
                     .textFieldStyle(.roundedBorder)
+                    .padding(.horizontal)
+
+                    // MARK: - Pet Identity
+
+                    sectionHeader(
+                        title: "Pet Identity",
+                        icon: "person.text.rectangle"
+                    )
+
+                    Group {
+
+                        TextField(
+                            "Sex (e.g. Male, Female)",
+                            text: $sex
+                        )
+
+                        TextField(
+                            "Color",
+                            text: $color
+                        )
+
+                        TextField(
+                            "Distinguishing Marks",
+                            text: $distinguishingMarks
+                        )
+
+                        TextField(
+                            "Microchip Number",
+                            text: $microchipNumber
+                        )
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    }
+                    .textFieldStyle(.roundedBorder)
+                    .padding(.horizontal)
+
+                    // MARK: - About
+
+                    sectionHeader(
+                        title: "About",
+                        icon: "text.alignleft"
+                    )
+
+                    VStack(alignment: .leading, spacing: 8) {
+
+                        Text("Short Bio")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(FurryTailsTheme.secondaryText)
+
+                        TextEditor(text: $bio)
+                            .frame(minHeight: 90)
+                            .padding(8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(
+                                        Color.gray.opacity(0.25),
+                                        lineWidth: 1
+                                    )
+                            )
+                    }
+                    .padding(.horizontal)
+
+                    // MARK: - Personality
+
+                    sectionHeader(
+                        title: "Personality",
+                        icon: "heart.text.square"
+                    )
+
+                    VStack(alignment: .leading, spacing: 14) {
+
+                        TextField(
+                            "Character (e.g. Playful, Calm, Friendly)",
+                            text: $character
+                        )
+                        .textFieldStyle(.roundedBorder)
+
+                        TextField(
+                            "Traits (e.g. Loyal, Energetic, Curious)",
+                            text: $traits
+                        )
+                        .textFieldStyle(.roundedBorder)
+
+                        TextField(
+                            "Characteristics",
+                            text: $characteristics
+                        )
+                        .textFieldStyle(.roundedBorder)
+                    }
                     .padding(.horizontal)
 
                     // MARK: - Add Pet Button
 
                     Button(action: {
+
                         print("🟢 ADD PET BUTTON PRESSED")
+
                         savePet()
+
                     }) {
 
                         if isUploading {
 
                             ProgressView()
+                                .tint(.white)
+                                .frame(maxWidth: .infinity)
                                 .padding()
 
                         } else {
 
-                            Text("Add Pet")
-                                .bold()
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(12)
-                                .padding(.horizontal)
+                            Label(
+                                "Add Pet",
+                                systemImage: "pawprint.fill"
+                            )
+                            .fontWeight(.bold)
+                            .frame(maxWidth: .infinity)
+                            .padding()
                         }
                     }
+                    .background(FurryTailsTheme.primaryGradient)
+                    .foregroundColor(.white)
+                    .cornerRadius(14)
+                    .padding(.horizontal)
                     .disabled(isUploading)
+                    .opacity(isUploading ? 0.7 : 1.0)
+
+                    Spacer(minLength: 30)
                 }
-                .padding()
-                .navigationTitle("Add New Pet")
+                .padding(.top)
+                .padding(.bottom, 20)
             }
+            .background(FurryTailsTheme.background.ignoresSafeArea())
+            .navigationTitle("Add New Pet")
+            .navigationBarTitleDisplayMode(.inline)
         }
+    }
+
+    // MARK: - Section Header
+
+    private func sectionHeader(
+        title: String,
+        icon: String
+    ) -> some View {
+
+        HStack(spacing: 8) {
+
+            Image(systemName: icon)
+                .foregroundColor(FurryTailsTheme.orange)
+
+            Text(title)
+                .font(.headline)
+                .foregroundColor(FurryTailsTheme.primaryText)
+
+            Spacer()
+        }
+        .padding(.horizontal)
+        .padding(.top, 4)
     }
 
     // MARK: - Save Pet
@@ -224,7 +384,51 @@ struct AddPetView: View {
         }
 
         // --------------------------------------------------
-        // 4. Begin upload
+        // 4. Prepare values
+        // --------------------------------------------------
+
+        let trimmedSpecies = species.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        let trimmedBreed = breed.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        let trimmedSex = sex.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        let trimmedColor = color.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        let trimmedMarks = distinguishingMarks.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        let trimmedMicrochip = microchipNumber.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        let trimmedBio = bio.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        let trimmedCharacter = character.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        let trimmedTraits = traits.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        let trimmedCharacteristics = characteristics.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        // --------------------------------------------------
+        // 5. Begin upload
         // --------------------------------------------------
 
         isUploading = true
@@ -243,7 +447,7 @@ struct AddPetView: View {
             do {
 
                 // --------------------------------------------------
-                // 5. Upload image to Firebase Storage
+                // 6. Upload main pet image
                 // --------------------------------------------------
 
                 print("📤 Uploading pet image...")
@@ -256,7 +460,7 @@ struct AddPetView: View {
                 print("✅ Pet image uploaded successfully")
 
                 // --------------------------------------------------
-                // 6. Get download URL
+                // 7. Get download URL
                 // --------------------------------------------------
 
                 print("🔗 Getting pet image download URL...")
@@ -267,7 +471,7 @@ struct AddPetView: View {
                 print("🔗 \(url.absoluteString)")
 
                 // --------------------------------------------------
-                // 7. Prepare Firestore pet document
+                // 8. Prepare Firestore pet document
                 // --------------------------------------------------
 
                 let petData: [String: Any] = [
@@ -276,26 +480,32 @@ struct AddPetView: View {
 
                     "name": trimmedName,
 
-                    "species": species.trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    ),
+                    "species": trimmedSpecies,
 
-                    "breed": breed.trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    ),
+                    "breed": trimmedBreed,
 
                     "age": Int(age) ?? 0,
 
-                    "bio": bio.trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    ),
+                    "sex": trimmedSex,
+
+                    "color": trimmedColor,
+
+                    "distinguishingMarks": trimmedMarks,
+
+                    "microchipNumber": trimmedMicrochip,
+
+                    "bio": trimmedBio,
 
                     "ownerId": uid,
 
-                    "character": "",
+                    "character": trimmedCharacter,
 
-                    "traits": "",
+                    "traits": trimmedTraits,
 
+                    "characteristics": trimmedCharacteristics,
+
+                    // Keep this as a String for now
+                    // for compatibility with existing Firestore data.
                     "petImageURL": url.absoluteString,
 
                     "petGalleryURLs": "",
@@ -309,9 +519,12 @@ struct AddPetView: View {
                 print("📄 Collection: pets")
                 print("📄 Document ID: \(petId)")
                 print("👤 ownerId: \(uid)")
+                print("🐾 Sex: \(trimmedSex)")
+                print("🎨 Color: \(trimmedColor)")
+                print("🔖 Microchip: \(trimmedMicrochip.isEmpty ? "Not specified" : trimmedMicrochip)")
 
                 // --------------------------------------------------
-                // 8. Write to Firestore /pets/{petId}
+                // 9. Write to Firestore
                 // --------------------------------------------------
 
                 print("📡 Saving pet to Firestore...")
@@ -346,7 +559,7 @@ struct AddPetView: View {
                 print("🐾 /pets/\(petId)")
 
                 // --------------------------------------------------
-                // 9. Optional: Share pet as post
+                // 10. Optional: Share pet as post
                 // --------------------------------------------------
 
                 if shareAsPost {
@@ -368,6 +581,8 @@ struct AddPetView: View {
                         "reposts": 0,
 
                         "comments": 0,
+
+                        "shares": 0,
 
                         "createdAt": Timestamp(),
 
@@ -407,7 +622,7 @@ struct AddPetView: View {
                 }
 
                 // --------------------------------------------------
-                // 10. Finished
+                // 11. Finished
                 // --------------------------------------------------
 
                 print("🎉 PET CREATION COMPLETE")
@@ -428,6 +643,7 @@ struct AddPetView: View {
                 print("❌ Description: \(error.localizedDescription)")
 
                 await MainActor.run {
+
                     isUploading = false
                 }
             }

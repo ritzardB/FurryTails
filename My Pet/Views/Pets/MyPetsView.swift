@@ -1,9 +1,3 @@
-//  MyPetsView.swift
-//  My Pet
-//
-//  Created by Richard Balabarcon on 09/10/2025.
-//
-
 import SwiftUI
 import FirebaseFirestore
 
@@ -43,13 +37,17 @@ struct MyPetsView: View {
                             print("🐾 Opening Add Pet")
                             showAddPetView = true
                         } label: {
-                            Label("Add Pet", systemImage: "plus")
-                                .fontWeight(.semibold)
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 12)
-                                .background(Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
+
+                            Label(
+                                "Add Pet",
+                                systemImage: "plus"
+                            )
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
                         }
                     }
                     .padding(.top, 50)
@@ -58,40 +56,72 @@ struct MyPetsView: View {
 
                     let pet = petService.pets[selectedIndex]
 
-                    AsyncImage(url: URL(string: pet.petImageURL)) { image in
+                    // MARK: - Selected Pet
 
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(
-                                maxWidth: .infinity,
-                                minHeight: 300,
-                                maxHeight: 300
-                            )
-                            .clipped()
-                            .cornerRadius(20)
-                            .shadow(radius: 10)
+                    NavigationLink {
+                        PetProfileView(pet: pet)
+                    } label: {
 
-                    } placeholder: {
+                        VStack(spacing: 10) {
 
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.gray.opacity(0.15))
-                            .frame(
-                                maxWidth: .infinity,
-                                minHeight: 300,
-                                maxHeight: 300
-                            )
-                            .overlay {
-                                ProgressView()
+                            AsyncImage(
+                                url: URL(
+                                    string: pet.petImageURL
+                                )
+                            ) { image in
+
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(
+                                        maxWidth: .infinity,
+                                        minHeight: 300,
+                                        maxHeight: 300
+                                    )
+                                    .clipped()
+                                    .cornerRadius(20)
+                                    .shadow(radius: 10)
+
+                            } placeholder: {
+
+                                RoundedRectangle(
+                                    cornerRadius: 20
+                                )
+                                .fill(
+                                    Color.gray.opacity(0.15)
+                                )
+                                .frame(
+                                    maxWidth: .infinity,
+                                    minHeight: 300,
+                                    maxHeight: 300
+                                )
+                                .overlay {
+                                    ProgressView()
+                                }
                             }
+
+                            HStack(spacing: 6) {
+
+                                Text(pet.name)
+                                    .font(.title2)
+                                    .bold()
+
+                                Image(
+                                    systemName: "chevron.right.circle.fill"
+                                )
+                                .font(.subheadline)
+                                .foregroundColor(
+                                    FurryTailsTheme.orange
+                                )
+                            }
+
+                            Text(
+                                pet.breed ?? pet.species
+                            )
+                            .foregroundColor(.secondary)
+                        }
                     }
-
-                    Text(pet.name)
-                        .font(.title2)
-                        .bold()
-
-                    Text(pet.breed ?? pet.species)
-                        .foregroundColor(.secondary)
+                    .buttonStyle(.plain)
 
                     // MARK: - Pet Carousel
 
@@ -111,46 +141,61 @@ struct MyPetsView: View {
 
                                 VStack {
 
-                                    AsyncImage(
-                                        url: URL(
-                                            string: p.petImageURL
-                                        )
-                                    ) { image in
+                                    NavigationLink {
+                                        PetProfileView(pet: p)
+                                    } label: {
 
-                                        image
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(
-                                                width: 100,
-                                                height: 100
+                                        AsyncImage(
+                                            url: URL(
+                                                string: p.petImageURL
                                             )
-                                            .clipShape(Circle())
-                                            .overlay(
-                                                Circle()
-                                                    .stroke(
-                                                        index == selectedIndex
-                                                        ? .blue
-                                                        : .clear,
-                                                        lineWidth: 3
-                                                    )
-                                            )
+                                        ) { image in
 
-                                    } placeholder: {
+                                            image
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(
+                                                    width: 100,
+                                                    height: 100
+                                                )
+                                                .clipShape(
+                                                    Circle()
+                                                )
+                                                .overlay(
+                                                    Circle()
+                                                        .stroke(
+                                                            index == selectedIndex
+                                                                ? FurryTailsTheme.orange
+                                                                : Color.clear,
+                                                            lineWidth: 3
+                                                        )
+                                                )
 
-                                        Circle()
-                                            .fill(
-                                                Color.gray.opacity(0.3)
-                                            )
-                                            .frame(
-                                                width: 100,
-                                                height: 100
-                                            )
+                                        } placeholder: {
+
+                                            Circle()
+                                                .fill(
+                                                    Color.gray.opacity(0.3)
+                                                )
+                                                .frame(
+                                                    width: 100,
+                                                    height: 100
+                                                )
+                                                .overlay {
+                                                    ProgressView()
+                                                }
+                                        }
                                     }
+                                    .buttonStyle(.plain)
 
                                     Text(p.name)
                                         .font(.caption)
+                                        .foregroundColor(
+                                            FurryTailsTheme.primaryText
+                                        )
                                 }
                                 .onTapGesture {
+
                                     selectedIndex = index
                                 }
                             }
@@ -187,7 +232,9 @@ struct MyPetsView: View {
 
             // MARK: - Add Pet Sheet
 
-            .sheet(isPresented: $showAddPetView) {
+            .sheet(
+                isPresented: $showAddPetView
+            ) {
 
                 AddPetView {
 
@@ -195,7 +242,9 @@ struct MyPetsView: View {
 
                         if let uid = authVM.currentUser?.id {
 
-                            print("🐾 Refreshing pets for \(uid)")
+                            print(
+                                "🐾 Refreshing pets for \(uid)"
+                            )
 
                             await petService.fetchPets(
                                 for: uid
@@ -216,7 +265,9 @@ struct MyPetsView: View {
 
             if let uid = authVM.currentUser?.id {
 
-                print("🐾 MyPetsView fetching pets for \(uid)")
+                print(
+                    "🐾 MyPetsView fetching pets for \(uid)"
+                )
 
                 await petService.fetchPets(
                     for: uid
@@ -225,9 +276,12 @@ struct MyPetsView: View {
                 print(
                     "🐾 MyPetsView loaded \(petService.pets.count) pets"
                 )
+
             } else {
 
-                print("❌ MyPetsView: No authenticated user")
+                print(
+                    "❌ MyPetsView: No authenticated user"
+                )
             }
         }
     }
