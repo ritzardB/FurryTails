@@ -39,6 +39,13 @@ struct PetProfileView: View {
                 // MARK: - Personality
 
                 personalitySection
+                
+                // MARK: - Pet Care Hub
+                petCareHubSection  // New section goes here
+
+                if let bio = currentPet.bio, !bio.isEmpty {
+                    aboutSection(bio)
+                }
 
                 // MARK: - About
 
@@ -119,8 +126,104 @@ struct PetProfileView: View {
                 }
             )
         }
-
     }
+    
+    private var petCareHubSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Pet Care Hub")
+                .font(.title3.bold())
+
+            Text("Keep track of your pet's health, appointments, and daily care.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            VStack(spacing: 0) {
+                NavigationLink {
+                    VetRecordsView(pet: currentPet)
+                } label: {
+                    petCareRow(
+                        title: "Health Records",
+                        subtitle: "Medical history, vaccinations and medications",
+                        systemImage: "heart.text.clipboard"
+                    )
+                }
+
+                Divider()
+
+                NavigationLink {
+                    VetRecordsView(pet: currentPet)
+                } label: {
+                    petCareRow(
+                        title: "Vet Appointments",
+                        subtitle: "Upcoming visits and appointment history",
+                        systemImage: "calendar"
+                    )
+                }
+
+                Divider()
+
+                NavigationLink {
+                    VetRecordsView(pet: currentPet)
+                } label: {
+                    petCareRow(
+                        title: "Food & Nutrition",
+                        subtitle: "Food preferences and feeding schedules",
+                        systemImage: "fork.knife"
+                    )
+                }
+
+                Divider()
+
+                NavigationLink {
+                    VetRecordsView(pet: currentPet)
+                } label: {
+                    petCareRow(
+                        title: "Care Reminders",
+                        subtitle: "Vaccinations, medication and routine care",
+                        systemImage: "bell.badge"
+                    )
+                }
+            }
+            .padding(.horizontal, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+        }
+        .padding(.horizontal)
+    }
+
+    private func petCareRow(
+        title: String,
+        subtitle: String,
+        systemImage: String
+    ) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.title3)
+                .foregroundStyle(.tint)
+                .frame(width: 36)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.vertical, 14)
+        .contentShape(Rectangle())
+    }
+
 }
 
 // MARK: - Refresh Pet
@@ -652,6 +755,7 @@ extension PetProfileView {
             }
         }
     }
+    
 }
 
 // MARK: - About

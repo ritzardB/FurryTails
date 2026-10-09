@@ -64,6 +64,57 @@ struct RegisterView: View {
                                 .white.opacity(0.85)
                             )
                     }
+                    
+                    // MARK: - Divider
+
+                    HStack(spacing: 12) {
+                        Rectangle()
+                            .fill(Color.white.opacity(0.5))
+                            .frame(height: 1)
+
+                        Text("OR")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white.opacity(0.8))
+
+                        Rectangle()
+                            .fill(Color.white.opacity(0.5))
+                            .frame(height: 1)
+                    }
+                    .padding(.vertical, 4)
+
+                    // MARK: - Sign Up with Google
+
+                    Button {
+                        Task {
+                            await authVM.signInWithGoogle()
+
+                            if authVM.isAuthenticated {
+                                dismiss()
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 12) {
+                            Text("G")
+                                .font(.system(
+                                    size: 22,
+                                    weight: .bold,
+                                    design: .rounded
+                                ))
+                                .foregroundColor(
+                                    Color(red: 0.26, green: 0.52, blue: 0.96)
+                                )
+
+                            Text("Sign up with Google")
+                                .font(.headline)
+                                .foregroundColor(.black)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.white)
+                        .cornerRadius(12)
+                    }
+                    .disabled(authVM.isLoading)
 
                     // MARK: - Registration Fields
 

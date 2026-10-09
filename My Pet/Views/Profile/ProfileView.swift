@@ -150,7 +150,7 @@ struct ProfileView: View {
 
                                 Text(
                                     isOwnProfile
-                                    ? "Your Pets"
+                                    ? "Your Furry Pets"
                                     : "\(profileUser.username)’s Pets"
                                 )
                                 .font(.headline)
@@ -159,16 +159,13 @@ struct ProfileView: View {
                             }
                             .padding(.horizontal)
 
-                            PetGalleryView(
+                            PetCardCarouselView(
                                 ownerId: profileUser.id ?? ""
                             )
                             .frame(
-                                maxWidth: .infinity,
-                                minHeight: 220,
-                                maxHeight: 400
-                            )
+                                maxWidth: .infinity)
                         }
-
+                        
                         Spacer()
                             .frame(height: 40)
 

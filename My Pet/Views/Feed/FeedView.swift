@@ -21,6 +21,9 @@ struct FeedView: View {
     @State private var showSearch = false
     @State private var showMenu = false
     
+    @State private var showVetClinicSearch = false
+    @State private var showVetRecords = false
+    
     init(deepLinkedPostId: Binding<String?> = .constant(nil)) {
            self._deepLinkedPostId = deepLinkedPostId
        }
@@ -240,18 +243,25 @@ struct FeedView: View {
                             Divider()
                             
                             menuItem(
-                                title: "Vet Services",
+                                title: "Find a Vet",
                                 icon: "stethoscope.circle.fill"
                             ) {
                                 closeMenu()
+                                showVetClinicSearch = true
+                            }
+
+                            menuItem(
+                                title: "Vet Records",
+                                icon: "cross.case.fill"
+                            ) {
+                                closeMenu()
+                                showVetRecords = true
                             }
                             
                             Spacer()
                             
                             Divider()
                             
-                            
-
                             menuItem(
                                 title: "Sign Out",
                                 icon: "rectangle.portrait.and.arrow.right"
@@ -474,6 +484,15 @@ struct FeedView: View {
                     .navigationTitle("Search")
                     .navigationBarTitleDisplayMode(.inline)
                 }
+            }
+            .sheet(isPresented: $showVetClinicSearch) {
+                NavigationView {
+                    VetClinicSearchView()
+                }
+                .navigationViewStyle(.stack)
+            }
+            .sheet(isPresented: $showVetRecords) {
+                VetRecordsPetPickerView()
             }
         }
         .navigationViewStyle(.stack)
