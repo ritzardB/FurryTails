@@ -2,13 +2,6 @@
 //  EditPetView.swift
 //  My Pet
 //
-//  Created by Richard Balabarcon on 08/10/2026.
-//
-
-//
-//  EditPetView.swift
-//  My Pet
-//
 
 import SwiftUI
 import PhotosUI
@@ -47,10 +40,15 @@ struct EditPetView: View {
     @State private var traits: String
     @State private var characteristics: String
 
-    // MARK: - Photo
+    // MARK: - Main Photo
 
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImageData: Data?
+
+    // MARK: - Gallery
+
+    @State private var selectedGalleryItems: [PhotosPickerItem] = []
+    @State private var selectedGalleryImages: [UIImage] = []
 
     // MARK: - State
 
@@ -102,11 +100,11 @@ struct EditPetView: View {
 
                 VStack(spacing: 22) {
 
-                    // MARK: Current Photo
+                    // MARK: - Current Photo
 
                     currentPhotoSection
 
-                    // MARK: Basic Information
+                    // MARK: - Basic Information
 
                     sectionHeader(
                         title: "Basic Information",
@@ -139,7 +137,7 @@ struct EditPetView: View {
                     .textFieldStyle(.roundedBorder)
                     .padding(.horizontal)
 
-                    // MARK: Pet Identity
+                    // MARK: - Pet Identity
 
                     sectionHeader(
                         title: "Pet Identity",
@@ -173,14 +171,17 @@ struct EditPetView: View {
                     .textFieldStyle(.roundedBorder)
                     .padding(.horizontal)
 
-                    // MARK: About
+                    // MARK: - About
 
                     sectionHeader(
                         title: "About",
                         icon: "text.alignleft"
                     )
 
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(
+                        alignment: .leading,
+                        spacing: 8
+                    ) {
 
                         Text("Short Bio")
                             .font(.subheadline)
@@ -193,16 +194,18 @@ struct EditPetView: View {
                             .frame(minHeight: 100)
                             .padding(8)
                             .background(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(
-                                        Color.gray.opacity(0.25),
-                                        lineWidth: 1
-                                    )
+                                RoundedRectangle(
+                                    cornerRadius: 10
+                                )
+                                .stroke(
+                                    Color.gray.opacity(0.25),
+                                    lineWidth: 1
+                                )
                             )
                     }
                     .padding(.horizontal)
 
-                    // MARK: Personality
+                    // MARK: - Personality
 
                     sectionHeader(
                         title: "Personality",
@@ -231,7 +234,16 @@ struct EditPetView: View {
                     }
                     .padding(.horizontal)
 
-                    // MARK: Error
+                    // MARK: - Photo Gallery
+
+                    sectionHeader(
+                        title: "Photo Gallery",
+                        icon: "photo.on.rectangle.angled"
+                    )
+
+                    galleryPickerSection
+
+                    // MARK: - Error
 
                     if let errorMessage {
 
@@ -242,27 +254,34 @@ struct EditPetView: View {
                             .padding(.horizontal)
                     }
 
-                    // MARK: Save
+                    // MARK: - Save
 
                     Button {
+
                         saveChanges()
+
                     } label: {
 
                         if isSaving {
 
                             ProgressView()
                                 .tint(.white)
-                                .frame(maxWidth: .infinity)
+                                .frame(
+                                    maxWidth: .infinity
+                                )
                                 .padding()
 
                         } else {
 
                             Label(
                                 "Save Changes",
-                                systemImage: "checkmark.circle.fill"
+                                systemImage:
+                                    "checkmark.circle.fill"
                             )
                             .fontWeight(.bold)
-                            .frame(maxWidth: .infinity)
+                            .frame(
+                                maxWidth: .infinity
+                            )
                             .padding()
                         }
                     }
@@ -307,12 +326,17 @@ struct EditPetView: View {
         VStack(spacing: 12) {
 
             if let selectedImageData,
-               let image = UIImage(data: selectedImageData) {
+               let image = UIImage(
+                   data: selectedImageData
+               ) {
 
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 170, height: 170)
+                    .frame(
+                        width: 170,
+                        height: 170
+                    )
                     .clipShape(Circle())
                     .overlay(
                         Circle()
@@ -334,7 +358,10 @@ struct EditPetView: View {
                     case .empty:
 
                         ProgressView()
-                            .frame(width: 170, height: 170)
+                            .frame(
+                                width: 170,
+                                height: 170
+                            )
 
                     case .success(let image):
 
@@ -384,7 +411,9 @@ struct EditPetView: View {
                     FurryTailsTheme.orange
                 )
             }
-            .onChange(of: selectedItem) { _, newItem in
+            .onChange(
+                of: selectedItem
+            ) { _, newItem in
 
                 Task {
 
@@ -394,15 +423,20 @@ struct EditPetView: View {
 
                     do {
 
-                        if let data = try await newItem.loadTransferable(
-                            type: Data.self
-                        ) {
+                        if let data =
+                            try await newItem.loadTransferable(
+                                type: Data.self
+                            ) {
 
                             await MainActor.run {
+
                                 selectedImageData = data
                             }
 
-                            print("✅ New pet image selected")
+                            print(
+                                "✅ New pet image selected"
+                            )
+
                             print(
                                 "📦 Image size: \(data.count) bytes"
                             )
@@ -413,12 +447,227 @@ struct EditPetView: View {
                         print(
                             "❌ Failed to load new pet image:"
                         )
-                        print(error.localizedDescription)
+
+                        print(
+                            error.localizedDescription
+                        )
                     }
                 }
             }
         }
         .padding(.top, 10)
+    }
+
+    // MARK: - Gallery Picker
+
+    private var galleryPickerSection: some View {
+
+        VStack(
+            alignment: .leading,
+            spacing: 14
+        ) {
+
+            PhotosPicker(
+                selection: $selectedGalleryItems,
+                maxSelectionCount: 10,
+                matching: .images
+            ) {
+
+                HStack(spacing: 10) {
+
+                    Image(
+                        systemName: "plus.circle.fill"
+                    )
+                    .font(.title3)
+
+                    Text("Add Gallery Photos")
+                        .fontWeight(.semibold)
+
+                    Spacer()
+
+                    Image(
+                        systemName: "photo.stack.fill"
+                    )
+                }
+                .foregroundColor(
+                    FurryTailsTheme.orange
+                )
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(
+                    FurryTailsTheme.orangeSoft
+                        .opacity(0.25)
+                )
+                .clipShape(
+                    RoundedRectangle(
+                        cornerRadius: 12
+                    )
+                )
+            }
+
+            if !selectedGalleryImages.isEmpty {
+
+                ScrollView(
+                    .horizontal,
+                    showsIndicators: false
+                ) {
+
+                    HStack(spacing: 12) {
+
+                        ForEach(
+                            Array(
+                                selectedGalleryImages.enumerated()
+                            ),
+                            id: \.offset
+                        ) { index, image in
+
+                            ZStack(
+                                alignment: .topTrailing
+                            ) {
+
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(
+                                        width: 120,
+                                        height: 120
+                                    )
+                                    .clipShape(
+                                        RoundedRectangle(
+                                            cornerRadius: 12
+                                        )
+                                    )
+
+                                Button {
+
+                                    removeGalleryPhoto(
+                                        at: index
+                                    )
+
+                                } label: {
+
+                                    Image(
+                                        systemName:
+                                            "xmark.circle.fill"
+                                    )
+                                    .font(.title2)
+                                    .foregroundColor(.white)
+                                    .background(
+                                        Circle()
+                                            .fill(
+                                                Color.black
+                                                    .opacity(0.55)
+                                            )
+                                    )
+                                }
+                                .padding(6)
+                            }
+                        }
+                    }
+                }
+            }
+
+            Text(
+                "You can select up to 10 photos."
+            )
+            .font(.caption)
+            .foregroundColor(
+                FurryTailsTheme.secondaryText
+            )
+        }
+        .padding(.horizontal)
+        .onChange(
+            of: selectedGalleryItems
+        ) { _, newItems in
+
+            loadGalleryImages(
+                from: newItems
+            )
+        }
+    }
+
+    // MARK: - Load Gallery Images
+
+    private func loadGalleryImages(
+        from items: [PhotosPickerItem]
+    ) {
+
+        Task {
+
+            var images: [UIImage] = []
+
+            for item in items {
+
+                do {
+
+                    if let data =
+                        try await item.loadTransferable(
+                            type: Data.self
+                        ),
+                       let image = UIImage(data: data) {
+
+                        images.append(image)
+
+                        print(
+                            "📸 Gallery photo loaded"
+                        )
+
+                        print(
+                            "📦 Image size: \(data.count) bytes"
+                        )
+                    }
+
+                } catch {
+
+                    print(
+                        "❌ Failed to load gallery photo:"
+                    )
+
+                    print(
+                        error.localizedDescription
+                    )
+                }
+            }
+
+            await MainActor.run {
+
+                selectedGalleryImages = images
+            }
+
+            print(
+                "📸 Selected gallery photos: \(images.count)"
+            )
+        }
+    }
+
+    // MARK: - Remove Gallery Photo
+
+    private func removeGalleryPhoto(
+        at index: Int
+    ) {
+
+        guard selectedGalleryImages.indices.contains(
+            index
+        ) else {
+            return
+        }
+
+        selectedGalleryImages.remove(
+            at: index
+        )
+
+        if selectedGalleryItems.indices.contains(
+            index
+        ) {
+
+            selectedGalleryItems.remove(
+                at: index
+            )
+        }
+
+        print(
+            "🗑️ Removed gallery photo at index \(index)"
+        )
     }
 
     // MARK: - Default Image
@@ -427,16 +676,22 @@ struct EditPetView: View {
 
         Circle()
             .fill(
-                FurryTailsTheme.orangeSoft.opacity(0.55)
+                FurryTailsTheme.orangeSoft
+                    .opacity(0.55)
             )
-            .frame(width: 170, height: 170)
+            .frame(
+                width: 170,
+                height: 170
+            )
             .overlay {
 
-                Image(systemName: "pawprint.fill")
-                    .font(.system(size: 55))
-                    .foregroundColor(
-                        FurryTailsTheme.orange
-                    )
+                Image(
+                    systemName: "pawprint.fill"
+                )
+                .font(.system(size: 55))
+                .foregroundColor(
+                    FurryTailsTheme.orange
+                )
             }
             .overlay(
                 Circle()
@@ -476,36 +731,18 @@ struct EditPetView: View {
     // MARK: - Save Changes
 
     private func saveChanges() {
-
-        print("✏️ saveChanges() STARTED")
-
-        guard let uid = Auth.auth().currentUser?.uid else {
-
-            print("❌ No authenticated Firebase user")
-
-            errorMessage = "You must be signed in to edit a pet."
-
+        guard let petId = pet.id else {
+            errorMessage = "Pet ID is missing."
             return
         }
 
-        guard let petId = pet.id,
-              !petId.isEmpty else {
-
-            print("❌ Pet has no document ID")
-
-            errorMessage = "Unable to identify this pet."
-
+        guard Auth.auth().currentUser != nil else {
+            errorMessage = "You must be signed in."
             return
         }
 
-        let trimmedName = name.trimmingCharacters(
-            in: .whitespacesAndNewlines
-        )
-
-        guard !trimmedName.isEmpty else {
-
-            errorMessage = "Pet name cannot be empty."
-
+        guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            errorMessage = "Pet name is required."
             return
         }
 
@@ -513,125 +750,107 @@ struct EditPetView: View {
         errorMessage = nil
 
         Task {
-
             do {
+                let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+                let trimmedSpecies = species.trimmingCharacters(in: .whitespacesAndNewlines)
+                let trimmedBreed = breed.trimmingCharacters(in: .whitespacesAndNewlines)
+                let trimmedSex = sex.trimmingCharacters(in: .whitespacesAndNewlines)
+                let trimmedColor = color.trimmingCharacters(in: .whitespacesAndNewlines)
+                let trimmedMarks = distinguishingMarks.trimmingCharacters(in: .whitespacesAndNewlines)
+                let trimmedMicrochip = microchipNumber.trimmingCharacters(in: .whitespacesAndNewlines)
+                let trimmedBio = bio.trimmingCharacters(in: .whitespacesAndNewlines)
+                let trimmedCharacter = character.trimmingCharacters(in: .whitespacesAndNewlines)
+                let trimmedTraits = traits.trimmingCharacters(in: .whitespacesAndNewlines)
+                let trimmedCharacteristics = characteristics.trimmingCharacters(in: .whitespacesAndNewlines)
+
+                // MARK: - Main Pet Gallery
 
                 var updatedImageURL = pet.petImageURL
 
-                // MARK: Upload New Image If Selected
-
-                if let selectedImageData {
+                if let imageData = selectedImageData {
 
                     let imageRef = storage
                         .reference()
-                        .child(
-                            "pet_images/\(petId).jpg"
-                        )
+                        .child("pet_images/\(petId).jpg")
 
-                    print("📤 Uploading updated pet image...")
+                    _ = try await imageRef.putDataAsync(imageData)
 
-                    _ = try await imageRef.putDataAsync(
-                        selectedImageData,
-                        metadata: nil
-                    )
+                    let downloadURL = try await imageRef.downloadURL()
 
-                    let newURL = try await imageRef.downloadURL()
+                    updatedImageURL = downloadURL.absoluteString
 
-                    updatedImageURL = newURL.absoluteString
+                    print("🐾 Main pet image uploaded:")
+                    print(downloadURL.absoluteString)
+                }
+                
+                // MARK: - Pet Gallery
 
-                    print(
-                        "✅ Updated image URL obtained"
-                    )
+                // Start with the existing gallery URLs.
+                var galleryURLs = pet.petGalleryURLs
+
+                // Upload newly selected gallery images.
+                for image in selectedGalleryImages {
+
+                    guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+                        continue
+                    }
+
+                    let fileName = "\(UUID().uuidString).jpg"
+
+                    let galleryRef = Storage.storage()
+                        .reference()
+                        .child("pet_images/\(petId)/gallery/\(fileName)")
+
+                    _ = try await galleryRef.putDataAsync(imageData)
+
+                    let downloadURL = try await galleryRef.downloadURL()
+
+                    galleryURLs.append(downloadURL.absoluteString)
+
+                    print("📸 Gallery image uploaded:")
+                    print(downloadURL.absoluteString)
                 }
 
-                // MARK: Firestore Update
+                // MARK: - Firestore Update
 
                 let updates: [String: Any] = [
-
                     "name": trimmedName,
-
-                    "species": species.trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    ),
-
-                    "breed": breed.trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    ),
-
+                    "species": trimmedSpecies,
+                    "breed": trimmedBreed,
                     "age": Int(age) ?? 0,
-
-                    "sex": sex.trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    ),
-
-                    "color": color.trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    ),
-
-                    "distinguishingMarks":
-                        distinguishingMarks.trimmingCharacters(
-                            in: .whitespacesAndNewlines
-                        ),
-
-                    "microchipNumber":
-                        microchipNumber.trimmingCharacters(
-                            in: .whitespacesAndNewlines
-                        ),
-
-                    "bio": bio.trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    ),
-
-                    "character": character.trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    ),
-
-                    "traits": traits.trimmingCharacters(
-                        in: .whitespacesAndNewlines
-                    ),
-
-                    "characteristics":
-                        characteristics.trimmingCharacters(
-                            in: .whitespacesAndNewlines
-                        ),
-
+                    "sex": trimmedSex,
+                    "color": trimmedColor,
+                    "distinguishingMarks": trimmedMarks,
+                    "microchipNumber": trimmedMicrochip,
+                    "bio": trimmedBio,
+                    "character": trimmedCharacter,
+                    "traits": trimmedTraits,
+                    "characteristics": trimmedCharacteristics,
                     "petImageURL": updatedImageURL,
-
+                    "petGalleryURLs": galleryURLs,
                     "updatedAt": Timestamp()
                 ]
-
-                print("📡 Updating Firestore pet...")
-                print("🐾 Pet ID: \(petId)")
-                print("👤 Current user: \(uid)")
 
                 try await db
                     .collection("pets")
                     .document(petId)
                     .updateData(updates)
 
-                print("✅ PET UPDATED SUCCESSFULLY")
+                print("✅ Pet updated successfully")
+                print("📸 Gallery count: \(galleryURLs.count)")
 
                 await MainActor.run {
-
                     isSaving = false
-
                     onPetUpdated?()
-
                     dismiss()
                 }
 
             } catch {
-
-                print("❌ PET UPDATE FAILED")
-                print("❌ Error: \(error)")
-                print(
-                    "❌ Description: \(error.localizedDescription)"
-                )
+                print("❌ Failed to save pet:")
+                print(error.localizedDescription)
 
                 await MainActor.run {
-
                     isSaving = false
-
                     errorMessage = error.localizedDescription
                 }
             }
