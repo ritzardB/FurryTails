@@ -10,6 +10,7 @@ import PhotosUI
 import FirebaseAuth
 import FirebaseFirestore
 import FirebaseStorage
+import UIKit
 
 struct AddPostView: View {
     @State private var caption = ""
@@ -18,6 +19,21 @@ struct AddPostView: View {
     @State private var selectedImages: [UIImage] = []
 
     @State private var isUploading = false
+    
+    @Environment(\.dismiss) private var dismiss
+
+    let initialImageURL: URL?
+    let dismissAfterPosting: Bool
+
+    @State private var isLoadingInitialImage = false
+    
+    init(
+        initialImageURL: URL? = nil,
+        dismissAfterPosting: Bool = false
+    ) {
+        self.initialImageURL = initialImageURL
+        self.dismissAfterPosting = dismissAfterPosting
+    }
 
     private let db = Firestore.firestore()
     private let storage = Storage.storage()
@@ -154,6 +170,52 @@ struct AddPostView: View {
                 .padding()
             }
             .navigationTitle("Create Post")
+        }
+        .onAppear {
+            guard
+                let imageURL = initialImageURL,
+                selectedImages.isEmpty,
+                !isLoadingInitialImage
+            else {
+                return
+            }
+
+            isLoadingInitialImage = true
+
+            Task {
+                do {
+                    let (data, _) = try await URLSession.shared.data(
+                        from: imageURL
+                    )
+
+                    guard let image = UIImage(data: data) else {
+                        throw NSError(
+                            domain: "AddPostView",
+                            code: 1,
+                            userInfo: [
+                                NSLocalizedDescriptionKey:
+                                    "Unable to load the selected gallery photo."
+                            ]
+                        )
+                    }
+
+                    await MainActor.run {
+                        selectedImages = [image]
+                        isLoadingInitialImage = false
+                    }
+
+                    print("✅ Gallery photo loaded into post composer")
+
+                } catch {
+                    await MainActor.run {
+                        isLoadingInitialImage = false
+                    }
+
+                    print(
+                        "❌ Failed to load gallery photo: \(error.localizedDescription)"
+                    )
+                }
+            }
         }
     }
 
@@ -377,6 +439,10 @@ struct AddPostView: View {
                         name: .postCreated,
                         object: nil
                     )
+                    
+                    if dismissAfterPosting {
+                        dismiss()
+                    }
                 }
 
             } catch {

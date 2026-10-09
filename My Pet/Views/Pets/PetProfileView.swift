@@ -107,17 +107,19 @@ struct PetProfileView: View {
         
         // MARK: - Gallery Viewer
 
-        .fullScreenCover(
-            item: $selectedGalleryItem
-        ) { item in
-
+        
+        .fullScreenCover(item: $selectedGalleryItem) { item in
             GalleryPhotoViewer(
                 imageURL: item.url,
                 onAddPhotos: { imageDataArray in
                     await addPhotosToGallery(imageDataArray)
+                },
+                onDeletePhoto: { imageURL in
+                    try await deletePhotoFromGallery(imageURL)
                 }
             )
         }
+
     }
 }
 
@@ -207,6 +209,51 @@ extension PetProfileView {
             }
         }
     }
+    
+    // DELETE photo from Gallery Function
+    
+    
+    private func deletePhotoFromGallery(_ imageURL: URL) async throws {
+        guard let petId = currentPet.id else {
+            throw NSError(
+                domain: "PetGallery",
+                code: 1,
+                userInfo: [
+                    NSLocalizedDescriptionKey: "Pet ID is missing."
+                ]
+            )
+        }
+
+        let photoURL = imageURL.absoluteString
+        let db = Firestore.firestore()
+
+        // Remove the photo URL from the existing Firestore gallery.
+        try await db.collection("pets")
+            .document(petId)
+            .updateData([
+                "petGalleryURLs": FieldValue.arrayRemove([photoURL]),
+                "updatedAt": Timestamp()
+            ])
+
+        // Refresh the profile so the carousel no longer shows the photo.
+        await refreshPet()
+
+        // Delete the corresponding file from Firebase Storage.
+        do {
+            let storageRef = Storage.storage()
+                .reference(forURL: photoURL)
+
+            try await storageRef.delete()
+            print("✅ Gallery photo deleted from Storage: \(photoURL)")
+        } catch {
+            // The photo has already been removed from Firestore.
+            // Log the cleanup failure so it can be investigated.
+            print("⚠️ Photo removed from gallery, but Storage cleanup failed:")
+            print(error.localizedDescription)
+        }
+    }
+
+    // ADD Photo to Gallery
     
     private func addPhotosToGallery(
         _ imageDataArray: [Data]
@@ -648,7 +695,7 @@ extension PetProfileView {
                    Image(systemName: "photo.on.rectangle")
                        .foregroundColor(FurryTailsTheme.orange)
 
-                   Text("Gallery")
+                   Text("Photo Gallery")
                        .font(.headline)
                        .fontWeight(.bold)
                        .foregroundColor(FurryTailsTheme.primaryText)
@@ -940,13 +987,23 @@ struct GalleryViewerItem: Identifiable {
 struct GalleryPhotoViewer: View {
 
     let imageURL: URL
-    
     let onAddPhotos: ([Data]) async -> Void
+    let onDeletePhoto: (URL) async throws -> Void
 
     @Environment(\.dismiss)
     private var dismiss
 
     @State private var showShareSheet = false
+    @State private var showPostComposer = false
+    
+    @State private var showPhotoPicker = false
+    @State private var selectedPhotos: [PhotosPickerItem] = []
+
+    @State private var showDeleteConfirmation = false
+    @State private var isDeletingPhoto = false
+    @State private var deleteErrorMessage: String?
+    @State private var showDeleteError = false
+
 
     var body: some View {
 
@@ -1076,7 +1133,7 @@ struct GalleryPhotoViewer: View {
                             )
                             .foregroundColor(.white)
 
-                        Text("Pet Photo")
+                        Text("Your Pet Photo")
                             .font(.caption)
                             .foregroundColor(
                                 .white.opacity(0.65)
@@ -1146,9 +1203,37 @@ struct GalleryPhotoViewer: View {
                             icon: "plus",
                             title: "Add"
                         ) {
-                            print("➕ Add photo tapped")
+                            selectedPhotos = []
+                            showPhotoPicker = true
                         }
+                        
+                        .photosPicker(
+                            isPresented: $showPhotoPicker,
+                            selection: $selectedPhotos,
+                            maxSelectionCount: 10,
+                            matching: .images
+                        )
+                        .onChange(of: selectedPhotos) { _, newItems in
+                            guard !newItems.isEmpty else { return }
 
+                            Task {
+                                var imageDataArray: [Data] = []
+
+                                for item in newItems {
+                                    if let data = try? await item.loadTransferable(type: Data.self) {
+                                        imageDataArray.append(data)
+                                    }
+                                }
+
+                                guard !imageDataArray.isEmpty else { return }
+
+                                await onAddPhotos(imageDataArray)
+
+                                await MainActor.run {
+                                    selectedPhotos = []
+                                }
+                            }
+                        }
 
                         Spacer()
 
@@ -1172,8 +1257,28 @@ struct GalleryPhotoViewer: View {
                             icon: "paperplane.fill",
                             title: "Post"
                         ) {
-                            print("📤 Post photo tapped")
+                            showPostComposer = true
                         }
+                        .sheet(isPresented: $showPostComposer) {
+                            AddPostView(
+                                initialImageURL: imageURL,
+                                dismissAfterPosting: true
+                            )
+                        }
+                        
+                        
+                        Spacer()
+
+                        // DELETE
+                        galleryActionButton(
+                            icon: "trash",
+                            title: isDeletingPhoto ? "Deleting..." : "Delete"
+                        ) {
+                            guard !isDeletingPhoto else { return }
+                            showDeleteConfirmation = true
+                        }
+                        .disabled(isDeletingPhoto)
+
                     }
                     .padding(.horizontal, 22)
                     .padding(.vertical, 14)
